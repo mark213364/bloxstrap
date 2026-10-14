@@ -1,4 +1,4 @@
-﻿using Bloxstrap.Enums.FlagPresets;
+using Bloxstrap.Enums.FlagPresets;
 
 namespace Bloxstrap
 {
@@ -16,15 +16,47 @@ namespace Bloxstrap
 
         public bool Changed => !OriginalProp.SequenceEqual(Prop);
 
+        /// <summary>
+        /// Все FastFlags, которые сейчас в белом списке Roblox.
+        /// Флаги вне белого списка клиент молча игнорирует.
+        /// </summary>
         public static IReadOnlyDictionary<string, string> PresetFlags = new Dictionary<string, string>
         {
+            // === Рендеринг — Fullscreen / DPI / MSAA ===
             { "Rendering.ManualFullscreen", "FFlagHandleAltEnterFullscreenManually" },
             { "Rendering.DisableScaling", "DFFlagDisableDPIScale" },
             { "Rendering.MSAA", "FIntDebugForceMSAASamples" },
 
+            // === Качество текстур ===
             { "Rendering.TextureQuality.OverrideEnabled", "DFFlagTextureQualityOverrideEnabled" },
             { "Rendering.TextureQuality.Level", "DFIntTextureQualityOverride" },
+
+            // === Производительность — детализация геометрии (LOD) ===
+            // Снижение дистанции переключения LOD даёт заметный прирост FPS
+            { "Performance.CSGLevelOfDetail", "DFIntCSGLevelOfDetailSwitchingDistance" },
+            { "Performance.CSGLevelOfDetailL12", "DFIntCSGLevelOfDetailSwitchingDistanceL12" },
+            { "Performance.CSGLevelOfDetailL23", "DFIntCSGLevelOfDetailSwitchingDistanceL23" },
+            { "Performance.CSGLevelOfDetailL34", "DFIntCSGLevelOfDetailSwitchingDistanceL34" },
+
+            // === Производительность — переопределение качества графики ===
+            // Диапазон 0–21, можно выйти за стандартные рамки 1–10
+            { "Performance.GraphicsQuality", "DFIntDebugFRMQualityLevelOverride" },
+
+            // === Производительность — трава (отключение травы сильно поднимает FPS) ===
+            { "Performance.GrassMaxDistance", "FIntFRMMaxGrassDistance" },
+            { "Performance.GrassMinDistance", "FIntFRMMinGrassDistance" },
+            { "Performance.GrassMotionReduced", "FIntGrassMovementReducedMotionFactor" },
+
+            // === Производительность — упрощение визуала ===
+            { "Performance.PauseVoxelizer", "DFFlagDebugPauseVoxelizer" },
+            { "Performance.GraySky", "FFlagDebugSkyGray" },
+
+            // === Производительность — контроль FPS ===
+            // Целевой FPS движка. 0 = без лимита (но может быть ограничен другими механизмами)
+            { "Performance.FpsCap", "DFIntTaskSchedulerTargetFps" },
         };
+
+        // === Соответствия для Enum (нужны для UI) ===
 
         public static IReadOnlyDictionary<MSAAMode, string?> MSAAModes => new Dictionary<MSAAMode, string?>
         {
@@ -43,8 +75,21 @@ namespace Bloxstrap
             { TextureQuality.Level3, "3" },
         };
 
-        // all fflags are stored as strings
-        // to delete a flag, set the value as null
+        /// <summary>
+        /// Уровни качества графики (0–21, чем ниже — тем выше FPS).
+        /// </summary>
+        public static IReadOnlyDictionary<GraphicsQuality, string?> GraphicsQualityLevels => new Dictionary<GraphicsQuality, string?>
+        {
+            { GraphicsQuality.Default, null },
+            { GraphicsQuality.Level1, "1" },
+            { GraphicsQuality.Level5, "5" },
+            { GraphicsQuality.Level10, "10" },
+            { GraphicsQuality.Level15, "15" },
+            { GraphicsQuality.Level21, "21" },
+        };
+
+        // все fflag хранятся как строки
+        // чтобы удалить флаг — передай null в качестве значения
         public void SetValue(string key, object? value)
         {
             const string LOG_IDENT = "FastFlagManager::SetValue";
@@ -74,10 +119,9 @@ namespace Bloxstrap
             }
         }
 
-        // this returns null if the fflag doesn't exist
+        // возвращает null, если fflag не существует
         public string? GetValue(string key)
         {
-            // check if we have an updated change for it pushed first
             if (Prop.TryGetValue(key, out object? value) && value is not null)
                 return value.ToString();
 
@@ -127,16 +171,69 @@ namespace Bloxstrap
             return mapping.First().Key;
         }
 
+        /// <summary>
+        /// Применяет один из готовых пресетов производительности.
+        /// Это основной метод оптимизации.
+        /// </summary>
+        public void ApplyPerformancePreset(PerformancePreset preset)
+        {
+            switch (preset)
+            {
+                case PerformancePreset.Default:
+                    // Сбрасываем всё, что связано с производительностью
+                    SetPreset("Performance", null);
+                    break;
+
+                case PerformancePreset.Balanced:
+                    // Сбалансированный режим: умеренное снижение LOD, базовая визуальная часть сохраняется
+                    SetValue("DFIntCSGLevelOfDetailSwitchingDistance", "300");
+                    SetValue("DFIntCSGLevelOfDetailSwitchingDistanceL12", "200");
+                    SetValue("DFIntCSGLevelOfDetailSwitchingDistanceL23", "300");
+                    SetValue("DFIntCSGLevelOfDetailSwitchingDistanceL34", "400");
+                    SetValue("FIntFRMMaxGrassDistance", "200");
+                    SetValue("DFIntTaskSchedulerTargetFps", "144");
+                    SetValue("FFlagDebugSkyGray", "False");
+                    break;
+
+                case PerformancePreset.Performance:
+                    // Режим производительности: заметное снижение детализации, подходит для средних ПК
+                    SetValue("DFIntCSGLevelOfDetailSwitchingDistance", "150");
+                    SetValue("DFIntCSGLevelOfDetailSwitchingDistanceL12", "100");
+                    SetValue("DFIntCSGLevelOfDetailSwitchingDistanceL23", "150");
+                    SetValue("DFIntCSGLevelOfDetailSwitchingDistanceL34", "200");
+                    SetValue("FIntFRMMaxGrassDistance", "50");
+                    SetValue("DFIntTaskSchedulerTargetFps", "240");
+                    SetValue("FFlagDebugSkyGray", "True");
+                    SetValue("DFFlagDebugPauseVoxelizer", "True");
+                    break;
+
+                case PerformancePreset.Potato:
+                    // Режим «картошка»: минимальная графика, максимум FPS
+                    SetValue("DFIntCSGLevelOfDetailSwitchingDistance", "0");
+                    SetValue("DFIntCSGLevelOfDetailSwitchingDistanceL12", "0");
+                    SetValue("DFIntCSGLevelOfDetailSwitchingDistanceL23", "0");
+                    SetValue("DFIntCSGLevelOfDetailSwitchingDistanceL34", "0");
+                    SetValue("FIntFRMMaxGrassDistance", "0");
+                    SetValue("FIntFRMMinGrassDistance", "0");
+                    SetValue("DFIntDebugFRMQualityLevelOverride", "1");
+                    SetValue("FFlagDebugSkyGray", "True");
+                    SetValue("DFFlagDebugPauseVoxelizer", "True");
+                    SetValue("FIntGrassMovementReducedMotionFactor", "True");
+                    break;
+            }
+
+            App.Logger.WriteLine("FastFlagManager::ApplyPerformancePreset", $"Applied preset: {preset}");
+        }
+
         public override void Save()
         {
-            // convert all flag values to strings before saving
-
+            // перед сохранением приводим все значения флагов к строкам
             foreach (var pair in Prop)
                 Prop[pair.Key] = pair.Value.ToString()!;
 
             base.Save();
 
-            // clone the dictionary
+            // клонируем словарь
             OriginalProp = new(Prop);
         }
 
@@ -144,9 +241,10 @@ namespace Bloxstrap
         {
             bool result = base.Load(alertFailure);
 
-            // clone the dictionary
+            // клонируем словарь
             OriginalProp = new(Prop);
 
+            // Оригинальная логика Bloxstrap: принудительно ManualFullscreen = False
             if (GetPreset("Rendering.ManualFullscreen") != "False")
                 SetPreset("Rendering.ManualFullscreen", "False");
 
