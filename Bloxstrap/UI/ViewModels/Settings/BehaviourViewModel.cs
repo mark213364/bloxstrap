@@ -1,4 +1,6 @@
-﻿namespace Bloxstrap.UI.ViewModels.Settings
+using System.Diagnostics;
+
+namespace Bloxstrap.UI.ViewModels.Settings
 {
     public class BehaviourViewModel : NotifyPropertyChangedViewModel
     {
@@ -20,6 +22,20 @@
         {
             get => App.State.Prop.ForceReinstall || IsRobloxInstallationMissing;
             set => App.State.Prop.ForceReinstall = value;
+        }
+
+        // === НОВОЕ: приоритет процесса Roblox ===
+        public ProcessPriorityClass SelectedCpuPriority
+        {
+            get => App.Settings.Prop.SelectedCpuPriority;
+            set
+            {
+                if (App.Settings.Prop.SelectedCpuPriority == value)
+                    return;
+
+                App.Settings.Prop.SelectedCpuPriority = value;
+                OnPropertyChanged(nameof(SelectedCpuPriority));
+            }
         }
     }
 }
