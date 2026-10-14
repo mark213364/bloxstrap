@@ -5,7 +5,6 @@ namespace Bloxstrap.Models.Persistable
 {
     public class Settings
     {
-        // bloxstrap configuration
         public BootstrapperStyle BootstrapperStyle { get; set; } = BootstrapperStyle.FluentDialog;
         public BootstrapperIcon BootstrapperIcon { get; set; } = BootstrapperIcon.IconBloxstrap;
         public string BootstrapperTitle { get; set; } = App.ProjectName;
@@ -24,7 +23,6 @@ namespace Bloxstrap.Models.Persistable
         public string? SelectedCustomTheme { get; set; } = null;
         public WebEnvironment WebEnvironment { get; set; } = WebEnvironment.Production;
 
-        // integration configuration
         public bool EnableActivityTracking { get; set; } = true;
         public bool UseDiscordRichPresence { get; set; } = true;
         public bool HideRPCButtons { get; set; } = true;
@@ -32,15 +30,19 @@ namespace Bloxstrap.Models.Persistable
         public bool ShowServerDetails { get; set; } = false;
         public ObservableCollection<CustomIntegration> CustomIntegrations { get; set; } = new();
 
-        // mod preset configuration
         public bool UseDisableAppPatch { get; set; } = false;
 
-        // === ОПТИМИЗАЦИЯ: приоритет процесса Roblox ===
         /// <summary>
         /// Приоритет процесса Roblox при запуске.
         /// Normal — поведение Windows по умолчанию.
         /// High требует прав администратора.
         /// </summary>
         public ProcessPriorityClass SelectedCpuPriority { get; set; } = ProcessPriorityClass.Normal;
+
+        /// <summary>
+        /// Предпочитаемый графический API (Vulkan / D3D11 / OpenGL).
+        /// Default — не навязывать движку выбор.
+        /// </summary>
+        public RenderingMode SelectedRenderingMode { get; set; } = RenderingMode.Default;
     }
 }
