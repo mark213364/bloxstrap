@@ -9,6 +9,7 @@
       xmlns:models="clr-namespace:Bloxstrap.UI.ViewModels.Settings"
       xmlns:resources="clr-namespace:Bloxstrap.Resources"
       xmlns:sys="clr-namespace:System.Diagnostics;assembly=System.Diagnostics.Process"
+      xmlns:enums="clr-namespace:Bloxstrap.Enums.FlagPresets"
       d:DataContext="{d:DesignInstance Type=models:BehaviourViewModel}"
       mc:Ignorable="d" 
       d:DesignHeight="600" d:DesignWidth="800"
@@ -45,7 +46,7 @@
             <ui:ToggleSwitch IsChecked="{Binding ForceRobloxReinstallation, Mode=TwoWay}" />
         </controls:OptionControl>
 
-        <!-- === НОВОЕ: Приоритет процесса Roblox === -->
+        <!-- Приоритет процесса -->
         <controls:OptionControl 
             Header="Roblox Process Priority"
             Description="Select the CPU priority for Roblox. High requires administrator privileges.">
@@ -55,6 +56,20 @@
                 <ComboBoxItem Content="Normal" Tag="{x:Static sys:ProcessPriorityClass.Normal}" />
                 <ComboBoxItem Content="Above Normal" Tag="{x:Static sys:ProcessPriorityClass.AboveNormal}" />
                 <ComboBoxItem Content="High" Tag="{x:Static sys:ProcessPriorityClass.High}" />
+            </ComboBox>
+        </controls:OptionControl>
+
+        <!-- Графический API -->
+        <controls:OptionControl 
+            Header="Graphics API"
+            Description="Force Roblox to use a specific renderer. Vulkan may improve performance on AMD GPUs, but can cause crashes.">
+            <ComboBox SelectedValue="{Binding SelectedRenderingMode, Mode=TwoWay}" 
+                      SelectedValuePath="Tag"
+                      MinWidth="140">
+                <ComboBoxItem Content="Default" Tag="{x:Static enums:RenderingMode.Default}" />
+                <ComboBoxItem Content="Vulkan" Tag="{x:Static enums:RenderingMode.Vulkan}" />
+                <ComboBoxItem Content="Direct3D 11" Tag="{x:Static enums:RenderingMode.D3D11}" />
+                <ComboBoxItem Content="OpenGL" Tag="{x:Static enums:RenderingMode.OpenGL}" />
             </ComboBox>
         </controls:OptionControl>
     </StackPanel>
