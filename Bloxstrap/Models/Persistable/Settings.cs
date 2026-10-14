@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace Bloxstrap.Models.Persistable
 {
@@ -33,5 +34,13 @@ namespace Bloxstrap.Models.Persistable
 
         // mod preset configuration
         public bool UseDisableAppPatch { get; set; } = false;
+
+        // === ОПТИМИЗАЦИЯ: приоритет процесса Roblox ===
+        /// <summary>
+        /// Приоритет процесса Roblox при запуске.
+        /// Normal — поведение Windows по умолчанию.
+        /// High требует прав администратора.
+        /// </summary>
+        public ProcessPriorityClass SelectedCpuPriority { get; set; } = ProcessPriorityClass.Normal;
     }
 }
